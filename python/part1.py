@@ -9,8 +9,8 @@ detections = np.loadtxt('../data/detections.txt')
 # The script runs up to, but not including, this image.
 run_until = 87 # Task 1.3
 # run_until = 88 # Task 1.4
-# run_until = detections.shape[0] # Task 1.7
-
+run_until = detections.shape[0] # Task 1.7
+debug = False
 # Change this if you want the Quanser visualization for a different image.
 # (Can be useful for Task 1.4)
 visualize_number = 0
@@ -18,8 +18,8 @@ visualize_number = 0
 quanser = Quanser()
 
 # Initialize the parameter vector
-p = np.array([11.6, 28.9, 0.0])*np.pi/180 # Optimal for image number 0
-# p = np.array([0.0, 0.0, 0.0]) # For Task 1.5
+# p = np.array([11.6, 28.9, 0.0])*np.pi/180 # Optimal for image number 0
+p = np.array([0.0, 0.0, 0.0]) # For Task 1.5
 
 all_residuals = []
 trajectory = np.zeros((run_until, 3))
@@ -40,9 +40,19 @@ for image_number in range(run_until):
     # the method later by passing a different lambda function.
     residualsfun = lambda p : quanser.residuals(uv, weights, p[0], p[1], p[2])
 
+    # print(levenberg_marquardt(residualsfun, p))
+
+    if debug and np.sum(weights[3:]) == 0:
+        print(f"image number: {image_number}")
+        J = jacobian(residualsfun, p, 1e-5)
+        print(weights)
+        print(p)
+        print(J, "\n")
+        print(J.T@J)
     # Task 1.3:
     # Implement gauss_newton (see methods.py).
-    p = gauss_newton(residualsfun, p)
+    # p = gauss_newton(residualsfun, p)
+    p = levenberg_marquardt(residualsfun, p)
 
     # Note:
     # The plotting code assumes that p is a 1D array of length 3

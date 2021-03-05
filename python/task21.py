@@ -24,19 +24,19 @@ if __name__ == "__main__":
     T = T1 if np.all(T1@XY01 > 0) else T2
 
     #Calculating u_tilde for the two different transformations
-    u1 = project(K, H @ XY1)
-    u2 = project(K, T @ XY01)
+    uv_H = project(K, H @ XY1)
+    uv_Rt = project(K, T @ XY01)
     
     #Reprojection error
-    error1 = u1 - uv
-    error2 = u2 - uv
+    error1 = uv_H - uv
+    error2 = uv_Rt - uv
 
     print(np.round(error1, decimals=4))
     print(np.round(error2, decimals=4))
 
     plt.imshow(heli_image)
-    plt.scatter(*u1, linewidths=1, color='yellow', s=10, label='H')
-    plt.scatter(*u2, color='red', label='[R t]', s=10)
+    plt.scatter(*uv_H, color='yellow', s=10, label='H')
+    plt.scatter(*uv_Rt, color='red', s=10, label='[R t]')
     plt.legend()
     plt.show()
     plt.savefig("task21_scatter_plot")

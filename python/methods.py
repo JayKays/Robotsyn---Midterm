@@ -8,7 +8,7 @@ import numpy as np
 #Calulates jacobian of function f(x) for a given epsilon
 def jacobian(f,x,eps):
     gradient = lambda h: (f(x + h) - f(x-h))/(2*eps)
-    return np.apply_along_axis(gradient, 0, np.eye(np.size(x))*eps)
+    return np.apply_along_axis(gradient, 0, np.eye(x.shape[0])*eps)
 
 
 def gauss_newton(residualsfun, p0, step_size=0.25, num_iterations=100, finite_difference_epsilon=1e-5):
@@ -41,6 +41,7 @@ def levenberg_marquardt(residualsfun, p0, max_iterations=100, tol = 1e-3, finite
 
     p = p0.copy()
     mu = None
+
     for _ in range(max_iterations):
         #Residual and Jacobian
         r = residualsfun(p)
@@ -48,18 +49,18 @@ def levenberg_marquardt(residualsfun, p0, max_iterations=100, tol = 1e-3, finite
         JTJ = J.T @ J
 
         mu = 1e-3*np.argmax(JTJ.diagonal()) if mu is None else mu
-        delta = np.linalg.solve(JTJ + mu*np.eye(3), -(J.T @ r))
+        delta = np.linalg.solve(JTJ + mu*np.eye(p0.shape[0]), -(J.T @ r))
 
         #Updates mu until delta is accepted
         while E(p) < E(p+delta):
             mu  *= 2
-            delta = np.linalg.solve(JTJ + mu*np.eye(3), -(J.T @ r))
+            delta = np.linalg.solve(JTJ + mu*np.eye(p0.shape[0]), -(J.T @ r))
 
         #Perform step
         p += delta
         mu /= 3
 
-        # print(f"Iteration {i}:\t Mu: {mu},\t Angles: {p}\ndelta: {delta}\t E: {E(p)}\tEd: {E(p+delta)}")
+        # print(f"Iteration {_}:\t Mu: {mu},\t Angles: {p}\ndelta: {delta}\t E: {E(p)}\tEd: {E(p+delta)}")
         if np.linalg.norm(delta) < tol : break
-
+    print(_)
     return p 

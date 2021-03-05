@@ -23,7 +23,7 @@ p = np.array([0.0, 0.0, 0.0]) # For Task 1.5
 
 all_residuals = []
 trajectory = np.zeros((run_until, 3))
-for image_number in [0]:
+for image_number in range(run_until):
     weights = detections[image_number, ::3]
     uv = np.vstack((detections[image_number, 1::3], detections[image_number, 2::3]))
 
@@ -53,7 +53,7 @@ for image_number in [0]:
     # Implement gauss_newton (see methods.py).
     # p = gauss_newton(residualsfun, p)
     p = levenberg_marquardt(residualsfun, p)
-    
+
     # print(p)
     # Note:
     # The plotting code assumes that p is a 1D array of length 3

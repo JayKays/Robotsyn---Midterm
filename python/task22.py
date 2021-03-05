@@ -58,8 +58,8 @@ if __name__ == "__main__":
 
     #Initial pose and parametrization
     R0 = T[:3,:3]
-    # t0 = T[:3,3]
-    t0 = [1.,1.,1.]
+    t0 = T[:3,3]
+    #t0 = [1.,1.,1.]
     p0 = np.hstack(([0,0,0], t0))
     print(f"Initial p: {p0}")
 
@@ -70,13 +70,21 @@ if __name__ == "__main__":
     T_LM = pose(p,R0)
     uv_LM = project(K, T_LM@XY01)
     
+
+    # print(np.round(uv_Rt - uv, decimals = 3))
+    # print(np.round(uv_LM - uv, decimals = 3))
+
+    print(np.linalg.norm(uv_Rt - uv))
+    print(np.linalg.norm(uv_LM - uv))
+
     #Generate plot
     plt.imshow(heli_image)
-    plt.scatter(*uv_LM, linewidths=1, color='green', s=10, label='LM')
-    # plt.scatter(*uv, color='red', label='Detection', s=10)
     plt.scatter(*uv_H, linewidths=1, color='red', s=10, label='H')
     plt.scatter(*uv_Rt, color='blue',s=10, label='[R t]')
+    plt.scatter(*uv_LM, linewidths=1, color='green', s=10, label='LM')
+    # plt.scatter(*uv, color='red', label='Detection', s=10)
     plt.legend()
-    plt.show()
+    plt.axis([200, 500, 600, 400])
     plt.savefig("task22_scatter_plot")
+    plt.show()
 

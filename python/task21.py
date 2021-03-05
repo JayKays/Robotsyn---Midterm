@@ -38,6 +38,7 @@ if __name__ == "__main__":
     plt.scatter(*uv_H, color='yellow', s=10, label='H')
     plt.scatter(*uv_Rt, color='red', s=10, label='[R t]')
     plt.legend()
-    plt.show()
+    plt.axis([200, 500, 600, 400])
     plt.savefig("task21_scatter_plot")
+    plt.show()
 

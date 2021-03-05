@@ -15,7 +15,7 @@ def gauss_newton(residualsfun, p0, step_size=0.25, num_iterations=100, finite_di
     # See the comment in part1.py regarding the 'residualsfun' argument.
 
     p = p0.copy()
-    for iteration in range(num_iterations):
+    for _ in range(num_iterations):
         # 1: Compute the Jacobian matrix J, using e.g.
         #    finite differences with the given epsilon.
         J = jacobian(residualsfun, p, finite_difference_epsilon)

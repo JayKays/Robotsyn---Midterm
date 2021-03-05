@@ -28,7 +28,7 @@ class Quanser:
         #
         # TASK: Compute the vector of residuals.
         #
-        r = np.ravel((uv_hat - uv)*weights[None,:])
+        r = np.ravel((uv_hat - uv)*weights)
         # r = np.zeros(14)
         return r
 

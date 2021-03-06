@@ -50,7 +50,7 @@ if __name__ == "__main__":
     #Estimating H and T = [R t]
     H = estimate_H(xy, XY)
     T1,T2 = decompose_H(H)
-    T = T1 if np.all(T1@XY01 >= 0) else T2
+    T = T1 if np.all((T1@XY01)[2,:] >= 0) else T2
 
     #Task 2.1 points for comparison
     uv_H = project(K, H @ XY1)

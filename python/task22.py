@@ -33,6 +33,7 @@ def residual(p, R0):
     '''Calculate projection residuals from parametrization'''
     T = pose(p,R0)
     uv_hat = project(K, T @ XY01)
+    
     r = uv_hat - uv
     return np.ravel(r)
 

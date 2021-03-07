@@ -9,7 +9,7 @@ detections = np.loadtxt('../data/detections.txt')
 # The script runs up to, but not including, this image.
 run_until = 87 # Task 1.3
 # run_until = 88 # Task 1.4
-run_until = detections.shape[0] # Task 1.7
+run_until = detections.shape[0] # Task 1.5
 debug = False
 # Change this if you want the Quanser visualization for a different image.
 # (Can be useful for Task 1.4)
@@ -65,6 +65,7 @@ for image_number in range(run_until):
     all_residuals.append(r)
     trajectory[image_number, :] = p
     if image_number == visualize_number:
+        print("Angles: ", p)
         print('Residuals on image number', image_number, r)
         quanser.draw(uv, weights, image_number)
 

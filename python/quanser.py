@@ -24,7 +24,7 @@ class Quanser:
         p2 = self.rotors_to_camera @ self.heli_points[:,3:]
         uv_hat = project(self.K, np.hstack([p1, p2]))
         self.uv_hat = uv_hat # Save for use in draw()
-
+        
         #
         # TASK: Compute the vector of residuals.
         #

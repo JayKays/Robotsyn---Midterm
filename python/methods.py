@@ -62,5 +62,5 @@ def levenberg_marquardt(residualsfun, p0, max_iterations=100, tol = 1e-3, finite
 
         # print(f"Iteration {_}:\t Mu: {mu},\t Angles: {p}\ndelta: {delta}\t E: {E(p)}\tEd: {E(p+delta)}")
         if np.linalg.norm(delta) < tol : break
-    print(_)
+    # print(E(p))
     return p 

@@ -25,8 +25,24 @@ def marker_poses(statics, angles):
 
     return rotors_to_camera, arm_to_camera
 
+def generalized_poses(statics, angles):
+    '''Calculates fully parametrized helicopter poses'''
+    #TODO: Gjøre dette, ingen anelse hva de mener atm.
+
+    base_to_platform = translate(statics[0]/2, statics[0]/2, 0.0)@rotate_z(angles[0])
+    hinge_to_base    = translate(0.00, 0.00,  statics[1])@rotate_y(angles[1])
+    arm_to_hinge     = translate(0.00, 0.00, -statics[2])
+    rotors_to_arm    = translate(statics[3], 0.00, -statics[4])@rotate_x(angles[2])
+
+    base_to_camera   = platform_to_camera @ base_to_platform
+    hinge_to_camera  = base_to_camera @ hinge_to_base
+    arm_to_camera    = hinge_to_camera @ arm_to_hinge
+    rotors_to_camera = arm_to_camera @ rotors_to_arm
+
+    return rotors_to_camera, arm_to_camera
+
 def image_residuals(statics, angles, uv, weights):
-    '''Calculates the residuals for a given image with given p'''
+    '''Calculates the residuals for a given image'''
 
     lengths = statics[:5]
     marker_points = np.vstack((np.reshape(statics[5:], (3,7)), np.ones(7)))
@@ -185,6 +201,7 @@ def optimize(residualsfun, p0, max_iterations=100, tol = 1e-3, finite_difference
     return p
 
 def get_init_traj(l):
+    '''Copy of code from task 1 to calculate initial trajectory over l images'''
     quanser = Quanser()
     p = np.array([0.0, 0.0, 0.0])
     trajectory = np.zeros((l, 3))
@@ -199,9 +216,13 @@ def get_init_traj(l):
 
     return np.ravel(trajectory)
 
+
 def plot_heli_points(p, image_number, m, name = "", col = 'red'):
+    '''Generates plot of marker points from p over a given image number'''
+
     statics = p[:m]
     angles = p[m + image_number*3: m + (image_number+1)*3]
+    heli_image = plt.imread('../data/video%04d.jpg' % image_number)
 
     T_rc, T_ac = marker_poses(statics, angles)
     marker_points = np.vstack((np.reshape(p[5: m], (3,7)), np.ones(7)))
@@ -211,25 +232,29 @@ def plot_heli_points(p, image_number, m, name = "", col = 'red'):
 
     uv = project(K, np.hstack((p1,p2)))
 
-    heli_image = plt.imread('../data/video%04d.jpg' % image_number)
-
     plt.imshow(heli_image)
     plt.scatter(*uv, linewidths=1, color = col, s=10, label=name)
 
 if __name__ == "__main__":
-
+    generalize = False
     l = detections.shape[0]
+    visualize_image = 150
     # l = 8
-    m = 5 + 3*7
-    visualize_image = 0
+
 
     #initial p
-    lengths = [0.1145, 0.325, 0.050, 0.65, 0.030]
-    markers = np.ravel(heli_points[:3,:])
-    angles = get_init_traj(l)
+    if generalize:
+        lengths = [0.1145, 0.325, 0.050, 0.65, 0.030]
+        markers = np.ravel(heli_points[:3,:])
+        angles = get_init_traj(l)
+    else: 
+        lengths = [0.1145, 0.325, 0.050, 0.65, 0.030]
+        markers = np.ravel(heli_points[:3,:])
+        angles = get_init_traj(l)
 
     p0 = np.hstack((lengths, markers, angles))
 
+    m = lengths.shape[0] + markers.shape[0]
     res = lambda p: residuals(p, l, m)
 
     print("Init complete")

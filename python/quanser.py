@@ -3,17 +3,22 @@ import numpy as np
 from common import *
 
 class Quanser:
-    def __init__(self):
+    def __init__(self, lengths = None, heli_points = None ):
         self.K = np.loadtxt('../data/K.txt')
         self.heli_points = np.loadtxt('../data/heli_points.txt').T
         self.platform_to_camera = np.loadtxt('../data/platform_to_camera.txt')
 
+        self.lengths = [0.1145, 0.325, 0.050, 0.65, 0.030] if lengths is None else lengths
+        self.heli_points = np.loadtxt('../data/heli_points.txt').T if heli_points is None else heli_points
+
     def residuals(self, uv, weights, yaw, pitch, roll):
         # Compute the helicopter coordinate frames
-        base_to_platform = translate(0.1145/2, 0.1145/2, 0.0)@rotate_z(yaw)
-        hinge_to_base    = translate(0.00, 0.00,  0.325)@rotate_y(pitch)
-        arm_to_hinge     = translate(0.00, 0.00, -0.050)
-        rotors_to_arm    = translate(0.65, 0.00, -0.030)@rotate_x(roll)
+        # lengths = [0.1145, 0.325, 0.050, 0.65, 0.030]
+
+        base_to_platform = translate(self.lengths[0]/2, self.lengths[0]/2, 0.0)@rotate_z(yaw)
+        hinge_to_base    = translate(0.00, 0.00,  self.lengths[1])@rotate_y(pitch)
+        arm_to_hinge     = translate(0.00, 0.00, -self.lengths[2])
+        rotors_to_arm    = translate(self.lengths[3], 0.00, -self.lengths[4])@rotate_x(roll)
         self.base_to_camera   = self.platform_to_camera@base_to_platform
         self.hinge_to_camera  = self.base_to_camera@hinge_to_base
         self.arm_to_camera    = self.hinge_to_camera@arm_to_hinge
@@ -47,3 +52,6 @@ class Quanser:
         plt.xlim([0, I.shape[1]])
         plt.ylim([I.shape[0], 0])
         plt.savefig('out_reprojection.png')
+    
+    def set_heli_points(self, points):
+        self.heli_points = points

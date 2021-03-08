@@ -3,6 +3,7 @@ import numpy as np
 from methods import *
 from quanser import Quanser
 from generate_quanser_summary import *
+from task3 import fetch_optimized_params
 
 detections = np.loadtxt('../data/detections.txt')
 
@@ -14,11 +15,23 @@ debug = False
 # Change this if you want the Quanser visualization for a different image.
 # (Can be useful for Task 1.4)
 visualize_number = 0
+# opt_lengths, opt_points = fetch_optimized_params()
 
-quanser = Quanser()
+
+# lengths = np.array([0.11485775, 0.32435232, 0.05018921, 0.64984397, 0.02967218])
+# points = np.array([[-0.12872,  0.17985,  0.43062, -0.03402, -0.03448, -0.03647, -0.03519],
+# [-0.01016, -0.00994, -0.01048, -0.09121, -0.18072,  0.2013,   0.10019],
+# [ 0.00987,  0.01026,  0.00963, -0.04072, -0.06007, -0.04908, -0.03978],
+# [ 1, 1, 1, 1, 1, 1, 1]])
+
+lengths, points = fetch_optimized_params(run_until)
+
+print(np.round(lengths, decimals = 4))
+print(np.round(points, decimals = 4))
+quanser = Quanser(lengths = lengths, heli_points = points)
 
 # Initialize the parameter vector
-# p = np.array([11.6, 28.9, 0.0])*np.pi/180 # Optimal for image number 0
+p = np.array([11.6, 28.9, 0.0])*np.pi/180 # Optimal for image number 0
 p = np.array([0.0, 0.0, 0.0]) # For Task 1.5
 
 all_residuals = []

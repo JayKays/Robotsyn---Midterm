@@ -48,7 +48,7 @@ def levenberg_marquardt(residualsfun, p0, max_iterations=100, tol = 1e-3, finite
         J = jacobian(residualsfun, p, finite_difference_epsilon)
         JTJ = J.T @ J
 
-        mu = 1e-3*np.argmax(JTJ.diagonal()) if mu is None else mu
+        mu = 1e-3*np.amax(JTJ.diagonal()) if mu is None else mu
         delta = np.linalg.solve(JTJ + mu*np.eye(p0.shape[0]), -(J.T @ r))
 
         #Updates mu until delta is accepted

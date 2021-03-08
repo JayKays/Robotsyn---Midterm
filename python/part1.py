@@ -3,7 +3,7 @@ import numpy as np
 from methods import *
 from quanser import Quanser
 from generate_quanser_summary import *
-from task3 import fetch_optimized_params
+from part3 import fetch_optimized_params
 
 detections = np.loadtxt('../data/detections.txt')
 

@@ -2,9 +2,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.linalg import block_diag
 from methods import jacobian, levenberg_marquardt
-from common import *  # noqa  # pylint: disable=unused-import
+from common import *
 from quanser import Quanser
-del globals()["draw_frame"]
+
 
 detections = np.loadtxt('../data/detections.txt')
 heli_points = np.loadtxt('../data/heli_points.txt').T
@@ -61,7 +61,6 @@ def image_residuals(statics, angles, uv, weights):
 def residuals(p, l, m):
     '''Calculates the total residuals for all images'''
     r = np.zeros(2*7*l)
-    # weights = detections[:, ::3]
     statics = p[:m]
     dynamics = p[m:]
 
@@ -78,9 +77,9 @@ def jac_blocks(p, eps, l, m):
        2n x 3 blocks of the jacobian matrix'''
 
     n = 7
-    test = p.copy()
-    statics = test[:m]
-    dynamics = test[m:]
+    # test = p.copy()
+    statics = p[:m]
+    dynamics = p[m:]
 
     static_jac = np.zeros((2*n*l, m))
     dyn_jacs = np.zeros((2*n, 3, l))
@@ -108,7 +107,7 @@ def hessian_blocks(static_jac, dyn_jacs, mu):
 
     l = dyn_jacs.shape[2]
     m = static_jac.shape[1]
-
+    
     A11 = static_jac.T @ static_jac + mu*np.eye(m)
     A12 = np.zeros((m,3*l))
     A22 = np.zeros((3,3,l))
@@ -136,10 +135,12 @@ def schurs_sol(stat, dyn, A11,A12,A22, r):
     BD_inv = np.zeros((m, 3*l))
     D_inv = np.zeros(A22.shape)
     # D_inv = block_diag(*(np.linalg.inv(A22[:,:,i]) for i in range(l)))
+
     #Init a,b where [a b]^T = -J^t * r
-    r_neg = (-1) * r.copy()
+    r_neg = r.copy()*(-1)
     a = stat.T @ r_neg
     b = np.zeros(3*l)
+    
     for i in range(l):
         b[3*i: 3*(i+1)] = dyn[:,:,i].T @ r_neg[14*i:14*(i+1)]
         B_block = A12[:,3*i:3*(i+1)]
@@ -154,18 +155,20 @@ def schurs_sol(stat, dyn, A11,A12,A22, r):
 
     #Use delta_stat to find solution for y = dynamic opt. variables
     #y = D^-1(b - B^T * x)
+    bCx = b - A12.T @ delta_stat
     delta_dyn = np.zeros(3*l)
     for i in range(l):
-        bCx = b[3*i: 3*(i+1)] - A12[:, 3*i: 3*(i+1)].T @ delta_stat
-        delta_dyn[3*i: 3*(i+1)] = D_inv[:,:,i] @ bCx
+        # bCx = b[3*i: 3*(i+1)] - A12[:, 3*i: 3*(i+1)].T @ delta_stat
+        delta_dyn[3*i: 3*(i+1)] = D_inv[:,:,i] @ bCx[3*i: 3*(i+1)]
 
     #delta = [x y]^T
     return np.hstack((delta_stat, delta_dyn))
 
 
-def optimize(residualsfun, p0, max_iterations=100, tol = 1e-6, finite_difference_epsilon=1e-5):
-
+def optimize(residualsfun, p0, max_iterations=1000, tol = 1e-6, finite_difference_epsilon=1e-5):
+    
     E = lambda r: np.sum(r**2)
+
     m = 5 + 3*7
     l = (p0.shape[0] - m)//3
 
@@ -174,7 +177,7 @@ def optimize(residualsfun, p0, max_iterations=100, tol = 1e-6, finite_difference
     static_jac, dyn_jacs = jac_blocks(p, finite_difference_epsilon, l, m)
     A11, A12, A22 = hessian_blocks(static_jac, dyn_jacs, mu = 0)
     mu = 1e-3 * np.maximum(np.amax(A11.diagonal()), np.amax([np.amax(A22[:,:,i].diagonal()) for i in range(l)]))
-
+    
     for _ in range(max_iterations):
 
         r = residualsfun(p)
@@ -183,7 +186,7 @@ def optimize(residualsfun, p0, max_iterations=100, tol = 1e-6, finite_difference
         static_jac, dyn_jacs = jac_blocks(p, finite_difference_epsilon, l, m)
         A11, A12, A22 = hessian_blocks(static_jac, dyn_jacs, mu)
 
-        delta = schurs_sol(static_jac, dyn_jacs, A11,A12, A22, r)
+        delta = schurs_sol(static_jac, dyn_jacs, A11, A12, A22, r)
 
         #Updates mu until delta is accepted
         while E(r) < E(residualsfun(p + delta)):
@@ -239,13 +242,9 @@ def plot_heli_points(p, image_number, m, name = "", col = 'red'):
     plt.imshow(heli_image)
     plt.scatter(*uv, linewidths=1, color = col, s=10, label=name)
 
-def fetch_optimized_params(l):
-    '''Function to pass optimize params to task1 script'''
+def fetch_optimized_params(l, generalize = False):
+    '''Function to run optimization from task1 script'''
 
-    generalize = False
-    # l = detections.shape[0]
-
-    #initial p
     if generalize:
         lengths = np.array([0.1145, 0.325, 0.050, 0.65, 0.030])
         markers = np.ravel(heli_points[:3,:])
@@ -292,7 +291,6 @@ if __name__ == "__main__":
     res = lambda p: residuals(p, l, m)
 
     print("Init complete, running batch optimization")
-
     p = optimize(res, p0)
 
     print(f"Optimized lengths: {p[:5]}")

@@ -17,12 +17,11 @@ def pose(p, R0):
     t = p[3:]
 
     s, c = np.sin, np.cos
-    Rx = lambda a: np.array([[1, 0, 0], [0, c(a), s(a)],[0, -s(a), c(a)]])
-    Ry = lambda a: np.array([[c(a), 0, -s(a)], [0, 1, 0],[s(a), 0, c(a)]])
-    Rz = lambda a: np.array([[c(a), s(a), 0], [-s(a), c(a), 0],[0, 0, 1]])
+    Rx = lambda a: np.array([[1, 0, 0], [0, c(a), s(a)], [0, -s(a), c(a)]])
+    Ry = lambda a: np.array([[c(a), 0, -s(a)], [0, 1, 0], [s(a), 0, c(a)]])
+    Rz = lambda a: np.array([[c(a), s(a), 0], [-s(a), c(a), 0], [0, 0, 1]])
 
     R = Rx(p[0]) @ Ry(p[1]) @ Rz(p[2]) @ R0
-
 
     T[:3,:3] = R
     T[:3,3] = t
@@ -71,7 +70,6 @@ if __name__ == "__main__":
     T_LM = pose(p,R0)
     uv_LM = project(K, T_LM@XY01)
     
-
     # print(np.round(uv_Rt - uv, decimals = 3))
     # print(np.round(uv_LM - uv, decimals = 3))
 
@@ -80,9 +78,9 @@ if __name__ == "__main__":
 
     #Generate plot
     plt.imshow(heli_image)
-    plt.scatter(*uv_H, linewidths=1, color='red', s=10, label='H')
+    plt.scatter(*uv_H, linewidths=1, color='red', s=40, label='H')
     plt.scatter(*uv_Rt, color='blue',s=10, label='[R t]')
-    plt.scatter(*uv_LM, linewidths=1, color='green', s=10, label='LM')
+    plt.scatter(*uv_LM, linewidths=1, color='lime', s=10, label='LM')
     # plt.scatter(*uv, color='red', label='Detection', s=10)
     plt.legend()
     plt.axis([200, 500, 600, 400])

@@ -5,6 +5,7 @@ def generate_quanser_summary(trajectory, residuals, detections):
     #
     # Print reprojection error statistics
     #
+    print("summary")
     weights = detections[:, ::3]
     reprojection_errors = []
     for i in range(trajectory.shape[0]):
@@ -43,7 +44,7 @@ def generate_quanser_summary(trajectory, residuals, detections):
     vis_pitch = trajectory[:,1] + enc_pitch[0] - trajectory[0,1]
     vis_roll = trajectory[:,2] + enc_roll[0] - trajectory[0,2]
 
-    vis_fps  = 16;
+    vis_fps  = 16
     enc_frame = enc_time*vis_fps
     vis_frame = np.arange(trajectory.shape[0])
 

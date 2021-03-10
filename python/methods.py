@@ -57,6 +57,7 @@ def levenberg_marquardt(residualsfun, p0, max_iterations=100, tol = 1e-3, finite
             delta = np.linalg.solve(JTJ + mu*np.eye(p0.shape[0]), -(J.T @ r))
 
         #Perform step
+        # print(f"Step {_}:\t E(p) =  {np.round(E(p), decimals = 6)}\t |delta| = {np.round(np.linalg.norm(delta), decimals = 6)}")
         p += delta
         mu /= 3
 

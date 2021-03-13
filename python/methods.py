@@ -1,18 +1,13 @@
 import numpy as np
 
-# This is just a suggestion for how you might
-# structure your implementation. Feel free to
-# make changes e.g. taking in other arguments.
-
-
-#Calulates jacobian of function f(x) for a given epsilon
 def jacobian(f,x,eps):
+    '''Calculates central difference estimation
+    of jacobian for given function f(x) '''
     gradient = lambda h: (f(x + h) - f(x-h))/(2*eps)
     return np.apply_along_axis(gradient, 0, np.eye(x.shape[0])*eps)
 
-
 def gauss_newton(residualsfun, p0, step_size=0.25, num_iterations=100, finite_difference_epsilon=1e-5):
-    # See the comment in part1.py regarding the 'residualsfun' argument.
+    '''Gauss-Newton optimization scheme'''
 
     p = p0.copy()
     for _ in range(num_iterations):
@@ -31,12 +26,8 @@ def gauss_newton(residualsfun, p0, step_size=0.25, num_iterations=100, finite_di
 
     return p
 
-
-# Implement Levenberg-Marquardt here. Feel free to
-# modify the function to take additional arguments,
-# e.g. the termination condition tolerance.
 def levenberg_marquardt(residualsfun, p0, max_iterations=100, tol = 1e-3, finite_difference_epsilon=1e-5):
-    #Functions to calculate error
+    '''LM optimization scheme'''
     E = lambda p: np.sum(residualsfun(p)**2)
 
     p = p0.copy()
@@ -55,13 +46,15 @@ def levenberg_marquardt(residualsfun, p0, max_iterations=100, tol = 1e-3, finite
         while E(p) < E(p+delta):
             mu  *= 2
             delta = np.linalg.solve(JTJ + mu*np.eye(p0.shape[0]), -(J.T @ r))
+            
+        # print(f"Steps {_}\t E(p) =  {np.round(E(p), decimals = 6)}\t |delta| = {np.round(np.linalg.norm(delta), decimals = 6)}")
+        # print(f"Steps {_}\t E(p) =  {np.round(E(p), decimals = 6)}\t mu = {np.round(mu, decimals = 6)}")
+        # print(p)
 
         #Perform step
-        # print(f"Step {_}:\t E(p) =  {np.round(E(p), decimals = 6)}\t |delta| = {np.round(np.linalg.norm(delta), decimals = 6)}")
         p += delta
         mu /= 3
 
-        # print(f"Iteration {_}:\t Mu: {mu},\t Angles: {p}\ndelta: {delta}\t E: {E(p)}\tEd: {E(p+delta)}")
         if np.linalg.norm(delta) < tol : break
     # print(E(p))
     return p 

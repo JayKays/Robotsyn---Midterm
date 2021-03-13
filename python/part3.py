@@ -27,11 +27,9 @@ def marker_poses(statics, angles):
     return rotors_to_camera, arm_to_camera
 
 def generalized_poses(statics, angles):
-    '''Calculates fully parametrized helicopter poses'''
-    #TODO: Gjøre dette, ingen anelse hva de mener atm.
+    '''Calculates poses of the fully parametrized helicopter'''
 
-    #Statics = (2 lengths + 2 angles)*3 + 1 length + helipoints
-
+    #Statics = 8 lengths + 6 angles + helipoints
     stat_length = statics[:8]
     stat_angle = statics[8:14]
 
@@ -54,8 +52,8 @@ def generalized_poses(statics, angles):
     return rotors_to_camera, arm_to_camera
 
 def image_residuals(statics, angles, uv, weights, generalize):
-    '''Calculates the residuals of a given image 
-    for static parameters and dynamic angles'''
+    '''Calculates the residuals of a given image, 
+        static parameters and dynamic parameters (angles)'''
     
     marker_points = np.vstack((np.reshape(statics[-21:], (3,7)), np.ones(7)))
 
@@ -71,7 +69,7 @@ def image_residuals(statics, angles, uv, weights, generalize):
     return np.ravel(r)
 
 def residuals(p, l, m, generalize):
-    '''Calculates the total residuals for all images'''
+    '''Calculates the total residuals over all images'''
     r = np.zeros(2*7*l)
     statics = p[:m]
     dynamics = p[m:]
@@ -115,7 +113,7 @@ def jac_blocks(p, eps, l, m, generalize):
 
 def hessian_blocks(static_jac, dyn_jacs, mu):
     '''Calculates the blocks in the approximate Hessian from 
-    the jacobian blocks, with added damping mu * I'''
+    the jacobian blocks, with added damping mu*I'''
 
     l = dyn_jacs.shape[2]
     m = static_jac.shape[1]
@@ -138,27 +136,28 @@ def schurs_sol(stat, dyn, A11,A12,A22, r):
     '''
     l = int(A12.shape[1]/3)
 
-    #Converting sparse blocks to block diagonal matrices
-    
-    Dyn = block_diag(*(dyn[:,:,i] for i in range(l)))
-    D_inv = block_diag(*(np.linalg.inv(A22[:,:,i]) for i in range(l)))
-    D = block_diag(*(A22[:,:,i] for i in range(l)))
+    #Converting sparse blocks to block diagonal matrices to simplify calculations
+    Dyn = block_diag(*(dyn[:,:,i] for i in range(l)))                   #Dynamic Jacobian
+    D = block_diag(*(A22[:,:,i] for i in range(l)))                     #D = A22
+    D_inv = block_diag(*(np.linalg.inv(A22[:,:,i]) for i in range(l)))  #D^-1 = A22^-1
+
+    #Note: The calculation time is about the same with block diags and the for loop
+    #indexing version, as long as the invertion of A22 happens on block level
 
     #Init a,b where [a b]^T = -J^t * r
-    
     a =  -1 * stat.T @ r
     b =  -1 * Dyn.T @ r
 
+    #Solving for delta =[x y]^T
     schurs = A11 - A12 @ D_inv @ A12.T
     delta_stat = np.linalg.solve(schurs, a - A12 @ D_inv @ b)
     delta_dyn = np.linalg.solve(D, b - A12.T @ delta_stat)
 
-    #delta = [x y]^T
     return np.hstack((delta_stat, delta_dyn))
 
+def LM(residualsfun, p0, generalize = False, max_iterations=100, tol = 1e-6, finite_difference_epsilon=1e-5):
+    '''LM scheme to optimize the helicopter model with schurs complement'''
 
-def optimize(residualsfun, p0, generalize = False, max_iterations=100, tol = 1e-6, finite_difference_epsilon=1e-5):
-    
     E = lambda r: np.sum(r**2)
 
     m = 26 if not generalize else 35
@@ -173,37 +172,32 @@ def optimize(residualsfun, p0, generalize = False, max_iterations=100, tol = 1e-
     for _ in range(max_iterations):
 
         r = residualsfun(p)
-        # print("Res shape: ", r.shape)
 
         static_jac, dyn_jacs = jac_blocks(p, finite_difference_epsilon, l, m, generalize)
         A11, A12, A22 = hessian_blocks(static_jac, dyn_jacs, mu)
 
         delta = schurs_sol(static_jac, dyn_jacs, A11, A12, A22, r)
 
-        #Updates mu until delta is accepted
+        #Increase mu until delta is accepted
         while E(r) < E(residualsfun(p + delta)):
-            # print(f"MU doubled, step {_}")
             mu *= 2
+
             static_jac, dyn_jacs = jac_blocks(p, finite_difference_epsilon, l, m, generalize)
             A11, A12, A22 = hessian_blocks(static_jac, dyn_jacs, mu)
 
             delta = schurs_sol(static_jac, dyn_jacs, A11,A12, A22, r)
 
+        print(f"Steps = {_}\t E(p) =  {np.round(E(r), decimals = 6)}",end="\t")
+        print(f"|delta| = {np.round(np.linalg.norm(delta), decimals = 6)}", end = "\t")
+        print(f"mu = {np.round(mu, decimals = 3)}")
+
         #Perform step
-        print(f"Step {_}:\t E(p) =  {np.round(E(r), decimals = 6)}\t |delta| = {np.round(np.linalg.norm(delta), decimals = 6)}")
-
-
-
         p += delta
         mu /= 3
 
-        if (np.linalg.norm(delta) < tol): break
-        if (E(r) - E(residualsfun(p)) < tol):
-            print(E(residualsfun(p)))
-            break
-
         #Stopping criteria
-
+        if (np.linalg.norm(delta) < tol): break
+        if (E(r) - E(residualsfun(p)) < tol): break
 
     return p
 
@@ -230,7 +224,7 @@ def plot_heli_points(p, image_number, m, general = False, name = "", col = 'red'
     statics = p[:m]
     angles = p[m + image_number*3: m + (image_number+1)*3]
     heli_image = plt.imread('../data/video%04d.jpg' % image_number)
-    
+
     T_rc, T_ac = generalized_poses(statics, angles) if general else marker_poses(statics, angles)
     marker_points = np.vstack((np.reshape(p[m-21: m], (3,7)), np.ones(7)))
     # print(np.round(marker_points, decimals = 5))
@@ -242,7 +236,7 @@ def plot_heli_points(p, image_number, m, general = False, name = "", col = 'red'
     plt.imshow(heli_image)
     plt.scatter(*uv, linewidths=1, color = col, s=10, label=name)
 
-def optimize_model(l, general = False, plot_points = False, image = 1):
+def optimize_model(l, general = False, plot_points = False, image = 0):
     '''Runs the optimization and returns optimized static parameters'''
 
     #initialize p0
@@ -265,11 +259,15 @@ def optimize_model(l, general = False, plot_points = False, image = 1):
 
     res = lambda p: residuals(p, l, m, general)
     print("Init complete, Optimizing model")
-    p = optimize(res, p0, generalize = general)
 
+    #Optimization
+    p = LM(res, p0, generalize = general)
+
+    #Extract helicopter parameters
     params = p[:m-21]
     points = np.vstack((np.reshape(p[m-21: m], (3,7)), np.ones(7)))
 
+    #Plot marker points of p0 vs optimalized p
     if plot_points:
         plot_heli_points(p0, image, m, general, "p0", 'yellow')
         plot_heli_points(p, image, m, general, "p", 'red')
@@ -278,14 +276,22 @@ def optimize_model(l, general = False, plot_points = False, image = 1):
 
     return params, points
 
+def save_to_txt(filename, arr):
+    '''Saves a np array to a text file'''
+    f = open(filename, "w")
+    np.savetxt(f, arr)
+    f.close()
 
 if __name__ == "__main__":
-    generalize = True
+    # generalize = True
     l = detections.shape[0]
-    visualize_image = 1
+    visualize_image = 0
 
-    params, points = optimize_model(l, general = generalize, plot_points= True, image = visualize_image)
+    #Optimizing models and saving parameters to txt files
+    params, points = optimize_model(l, general = False)
+    save_to_txt("../opt_lengths.txt", params)
+    save_to_txt("../opt_heli_points.txt", points)
 
-    print(params)
-    print(points)
-
+    params, points = optimize_model(l, general = True)
+    save_to_txt("../generalized_params.txt", params)
+    save_to_txt("../generalized_heli_points.txt", points)

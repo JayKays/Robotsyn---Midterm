@@ -7,14 +7,10 @@ from methods import levenberg_marquardt
 XY01 = np.loadtxt("../data/platform_corners_metric.txt")
 uv = np.loadtxt("../data/platform_corners_image.txt")
 K = np.loadtxt("../data/K.txt")
-heli_image = plt.imread('../data/video0000.jpg') #Image to plot estimations
-
+heli_image = plt.imread('../data/video0000.jpg')
 
 def pose(p, R0):
     ''' Calculates the pose from parametrization'''
-    T = np.eye(4)
-
-    t = p[3:]
 
     s, c = np.sin, np.cos
     Rx = lambda a: np.array([[1, 0, 0], [0, c(a), s(a)], [0, -s(a), c(a)]])
@@ -22,7 +18,9 @@ def pose(p, R0):
     Rz = lambda a: np.array([[c(a), s(a), 0], [-s(a), c(a), 0], [0, 0, 1]])
 
     R = Rx(p[0]) @ Ry(p[1]) @ Rz(p[2]) @ R0
+    t = p[3:]
 
+    T = np.eye(4)
     T[:3,:3] = R
     T[:3,3] = t
 
@@ -64,24 +62,32 @@ if __name__ == "__main__":
     print(f"Initial p: {p0}")
 
     #LM estimation
-    p = levenberg_marquardt(lambda p: residual(p,R0), p0, tol = 1e-12)
+    p = levenberg_marquardt(lambda p: residual(p,R0), p0, tol = 1e-6)
 
-    #Calculate ouput from LM estimation
+    #Calculate output pose from LM estimation
     T_LM = pose(p,R0)
     uv_LM = project(K, T_LM@XY01)
-    
-    # print(np.round(uv_Rt - uv, decimals = 3))
-    # print(np.round(uv_LM - uv, decimals = 3))
 
-    print(np.linalg.norm(uv_Rt - uv))
-    print(np.linalg.norm(uv_LM - uv))
+    print("Rep error H : ", np.round(np.linalg.norm(uv_H -  uv, axis = 0), decimals = 4))
+    print("Rep error Rt: ",np.round(np.linalg.norm(uv_Rt - uv, axis = 0), decimals = 4))
+    print("Rep eroor LM:", np.round(np.linalg.norm(uv_LM - uv, axis = 0), decimals = 4))
 
-    #Generate plot
+    #Generate plots
+    plt.figure(1)
     plt.imshow(heli_image)
-    plt.scatter(*uv_H, linewidths=1, color='red', s=40, label='H')
+    plt.scatter(*uv, linewidths=1, edgecolor='black', color='white', s=80, label='Observed')
+    plt.scatter(*uv_H, color='red', s=40, label='H')
+    plt.scatter(*uv_Rt, color='blue', s=10, label='[R t]')
+    plt.legend()
+    plt.axis([200, 500, 600, 400])
+    plt.savefig("task21_scatter_plot")
+
+    plt.figure(2)
+    plt.imshow(heli_image)
+    plt.scatter(*uv, linewidths=1, edgecolor='black', color='white', s=40, label='Observed')
+    plt.scatter(*uv_H, color='red', s=40, label='H')
     plt.scatter(*uv_Rt, color='blue',s=10, label='[R t]')
-    plt.scatter(*uv_LM, linewidths=1, color='lime', s=10, label='LM')
-    # plt.scatter(*uv, color='red', label='Detection', s=10)
+    plt.scatter(*uv_LM, linewidths=1, color='lime', s=20, label='LM')
     plt.legend()
     plt.axis([200, 500, 600, 400])
     plt.savefig("task22_scatter_plot")

@@ -20,22 +20,23 @@ optimized_model = True
 
 #Enabling this uses the more general helicopter model from task 3
 #Note: This won't trigger unless optimized_model is also True
-generalize_model = False
+generalize_model = True
 
+#Loads the quanser model with parameters
 if optimized_model:
     if generalize_model:
-        params = np.loadtxt("../generalized_params.txt")
-        markers = np.loadtxt("../generalized_heli_points.txt")
+        params = np.loadtxt("generalized_params.txt")
+        markers = np.loadtxt("generalized_heli_points.txt")
     else:
-        params = np.loadtxt("../opt_lengths.txt")
-        markers = np.loadtxt("../opt_heli_points.txt")
+        params = np.loadtxt("opt_lengths.txt")
+        markers = np.loadtxt("opt_heli_points.txt")
     quanser = Quanser(params = params, heli_points = markers, generalized_model=generalize_model)
 else:
     quanser = Quanser()
 
 # Initialize the parameter vector
-# p = np.array([11.6, 28.9, 0.0])*np.pi/180 # Optimal for image number 0
-p = np.array([0.0, 0.0, 0.0]) # For Task 1.5
+p = np.array([11.6, 28.9, 0.0])*np.pi/180 # Optimal for image number 0
+# p = np.array([0.0, 0.0, 0.0]) # For Task 1.5
 
 all_residuals = []
 trajectory = np.zeros((run_until, 3))
@@ -58,4 +59,4 @@ for image_number in range(run_until):
         quanser.draw(uv, weights, image_number)
 
 generate_quanser_summary(trajectory, all_residuals, detections)
-# plt.show()
+plt.show()

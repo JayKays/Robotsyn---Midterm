@@ -57,7 +57,6 @@ if __name__ == "__main__":
     #Initial pose and parametrization
     R0 = T[:3,:3]
     t0 = T[:3,3]
-    #t0 = [1.,1.,1.]
     p0 = np.hstack(([0,0,0], t0))
     print(f"Initial p: {p0}")
 

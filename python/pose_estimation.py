@@ -1,6 +1,7 @@
 import numpy as np
 
 #Reused funcitons from assignment 4
+
 def estimate_H(xy, XY):
     n = XY.shape[1]
     A = []

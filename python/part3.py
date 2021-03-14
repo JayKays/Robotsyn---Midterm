@@ -5,7 +5,6 @@ from methods import jacobian, levenberg_marquardt
 from common import *
 from quanser import Quanser
 
-
 detections = np.loadtxt('../data/detections.txt')
 heli_points = np.loadtxt('../data/heli_points.txt').T
 K = np.loadtxt('../data/K.txt')
@@ -69,11 +68,12 @@ def image_residuals(statics, angles, uv, weights, generalize):
     return np.ravel(r)
 
 def residuals(p, l, m, generalize):
-    '''Calculates the total residuals over all images'''
+    '''Calculates the total residuals over the l first images'''
     r = np.zeros(2*7*l)
-    statics = p[:m]
+    statics = p[:m] 
     dynamics = p[m:]
 
+    #Calculate residuals per image
     for i in range(l):
         angles = dynamics[3*i: 3*(i+1)]
         weights = detections[i, ::3]
@@ -289,9 +289,9 @@ if __name__ == "__main__":
 
     #Optimizing models and saving parameters to txt files
     params, points = optimize_model(l, general = False)
-    save_to_txt("../opt_lengths.txt", params)
-    save_to_txt("../opt_heli_points.txt", points)
+    save_to_txt("opt_lengths.txt", params)
+    save_to_txt("opt_heli_points.txt", points)
 
     params, points = optimize_model(l, general = True)
-    save_to_txt("../generalized_params.txt", params)
-    save_to_txt("../generalized_heli_points.txt", points)
+    save_to_txt("generalized_params.txt", params)
+    save_to_txt("generalized_heli_points.txt", points)

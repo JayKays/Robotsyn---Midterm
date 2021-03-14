@@ -48,7 +48,6 @@ class Quanser:
         
         # TASK: Compute the vector of residuals.
         r = np.ravel((uv_hat - uv)*weights)
-        # r = np.linalg.norm((uv_hat - uv)*weights, axis = 0)
         return r
 
     def draw(self, uv, weights, image_number):
